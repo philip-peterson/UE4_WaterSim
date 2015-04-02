@@ -1,6 +1,7 @@
-LDFLAGS="-L/usr/local/opt/openblas/lib -L/usr/local/lib -L/Users/ironmagma/Code/UE4_WaterSim/Experiment -lblas"
+#!/usr/bin/env bash
+LDFLAGS="-lcblas"
 
-CPPFLAGS="-I/usr/local/lib/ -I/usr/local/Cellar/lapack/3.5.0/include/ -I/usr/local/opt/openblas/include"
+CPPFLAGS="-I/usr/local/Cellar/lapack/3.5.0/include/"
 
 
 set -v

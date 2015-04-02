@@ -1,6 +1,6 @@
 #include <iostream>
 #include "lapacke.h"
-#include "blas.h"
+#include <cblas.h>
 #include <iterator>
 #include <array>
 #include <algorithm>
