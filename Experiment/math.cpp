@@ -125,8 +125,6 @@ inline void firstHalfStep(
 
 
 int main(int argc, char** argv) {
-   cout << "Hello wrold " <<endl;
-
    int n = 64;
    double dt = 0.1;
    double dx = 0.1;
