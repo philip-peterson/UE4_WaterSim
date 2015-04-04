@@ -39,6 +39,7 @@ void printmat(double* H, int n) {
 
 inline void firstHalfStep(
    int n,
+   double *H,
    double *Hx,
    double *Ux,
    double *Vx,
@@ -47,6 +48,32 @@ inline void firstHalfStep(
    double *Vy
 ) {
 
+   H[0]=.1;
+   H[1]=.2;
+   H[2]=.3;
+   H[3]=.4;
+
+   H[4]=.5;
+   H[5]=.6;
+   H[6]=.7;
+   H[7]=.8;
+
+   H[8]=.9;
+   H[9]=.109;
+   H[10]=.119;
+   H[11]=.129;
+
+   H[12]=.13;
+   H[13]=.14;
+   H[14]=.15;
+   H[15]=.16;
+
+   cout << "H:" << endl;
+   printmat(H, n+2);
+   cout << endl << "Hx:" << endl;
+   printmat(Hx, n+1);
+   cout << endl;
+   
    // Original matlab source:
    //    Hx(i,j) = (H(i+1,j+1)+H(i,j+1))/2 - dt/(2*dx)*(U(i+1,j+1)-U(i,j+1));
    // Break that down into:
@@ -59,39 +86,41 @@ inline void firstHalfStep(
    //    <1.a.1> Hx([1:n+1],[1:n]) = H([2:n+2],[2:n+1])+H([1:n+1],[2:n+1])
    //    <1.a.2> Hx([1:n+1],[1:n]) = Hx(i,j)/2
 
-   // Height
-   //    <1.a.1> Hx([1:n+1],[1:n]) = H([2:n+2],[2:n+1])+H([1:n+1],[2:n+1])
-   Hx[0] = 2;
-   Hx[3] = 2;
-   Hx[6] = 2;
-   Hx[1] = .1;
-   Hx[4] = .2;
-   Hx[7] = .3;
-
-   printmat(Hx, n+1);
-
-   const double *x = Hx+1;
-   double *y = Hx;
-
-   const int intt = 1;
-   const double aaa = 1;
-
-   for (int i = 0; i < n; i++) {
-      cblas_daxpy(
-         intt,
-         aaa,
-         x,
-         intt,
-         y,
-         intt
+   for (int i = 0; i < n+1; i++) {
+      // Height
+      //    <1.a.1> Hx([1:n+1],[1:n]) = H([2:n+2],[2:n+1])+H([1:n+1],[2:n+1])
+      cblas_dcopy(
+         n+1,
+         (const double*)(H+n+2+i+1),
+         n+2,
+         Hx+i,
+         n+1
       );
-      /*
-       * void cblas_daxpy(const int N, const double alpha, const double *X,
-       *                  const int incX, double *Y, const int incY);
-       */
+      cblas_daxpy(
+         n+1,
+         1,
+         (const double*)(H+1+i),
+         n+1,
+         Hx+i,
+         n+1
+      );
+      //    <1.a.2> Hx([1:n+1],[1:n]) = Hx(i,j)/2
+      cblas_dscal(
+         n+1,
+         .5,
+         Hx+i,
+         n+1
+      );
+      // Since i = 1:n+1 and j = 1:n, 
+      //    <1.b> Hx(i,j) = Hx(i,j) - dt/(2*dx)*(U(i+1,j+1)-U(i,j+1));
+      //    <1.b> Hx([1:n+1],[1:n]) = Hx([1:n+1],[1:n]) - dt/(2*dx)*(U(i+1,j+1)-U(i,j+1));
+      //    <1.b> Hx([1:n+1],[1:n]) += - dt/(2*dx)*(U(i+1,j+1)-U(i,j+1));
+      // In other words:
+      //    <1.b.1> swap = U(i+1,j+1) ;
+      //    <1.b.2> swap -= U(i,j+1) ;
+      //    <1.b.3> Hx([1:n+1],[1:n]) += - dt/(2*dx)*swap;
    }
    cout << endl;
-   printmat(Hx, n+1);
 }
 
 
@@ -99,6 +128,8 @@ int main(int argc, char** argv) {
    cout << "Hello wrold " <<endl;
 
    int n = 64;
+   double dt = 0.1;
+   double dx = 0.1;
 
    n = 2; // testing
 
@@ -123,7 +154,9 @@ int main(int argc, char** argv) {
    double *Vy = matalloc(n+1);
    zeros(Vy, n+1);
 
-   firstHalfStep(n, Hx, Ux, Vx, Hy, Uy, Vy);
+   double *swap = malloc(sizeof(*swap) * n+2)
+
+   firstHalfStep(n, dt, dx, H, Hx, Ux, Vx, Hy, Uy, Vy, swap);
 
 
    return 0;
