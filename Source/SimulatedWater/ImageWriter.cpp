@@ -6,6 +6,9 @@
 
 
 bool UImageWriter::WriteCanvasToCsv(UCanvasRenderTarget2D* canvas) {
+	return true;
+
+
 	FArchive *FileWriter = IFileManager::Get().CreateFileWriter(TEXT("C:/Users/ironmagma/Desktop/ue4_output.csv"));
 	if ( FileWriter == nullptr ) {
 		return false;

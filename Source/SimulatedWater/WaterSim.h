@@ -30,13 +30,12 @@ public:
 	// Called every frame
 	virtual void Tick( float DeltaSeconds ) override;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-		UWaterCanvas2D *WaterTargetCapture;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		UTexture2D *MyCapture;
+	
 	virtual void BeginDestroy() override;
 	
 	void DoCycle();
-
-	static void CopyTextureToRenderTargetTexture(UTexture* SourceTexture, UTextureRenderTarget2D* RenderTargetTexture, ERHIFeatureLevel::Type FeatureLevel);
 
 };

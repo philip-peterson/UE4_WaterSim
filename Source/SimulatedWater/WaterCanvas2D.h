@@ -14,6 +14,6 @@ class SIMULATEDWATER_API UWaterCanvas2D : public UCanvasRenderTarget2D
 	GENERATED_BODY()
 
 		virtual void ReceiveUpdate(UCanvas* Canvas, int32 Width, int32 Height) override;
-	
+		
 	
 };

@@ -2,6 +2,7 @@
 
 #include "SimulatedWater.h"
 #include "WaterSim.h"
+#include "Kismet/KismetMathLibrary.h"
 
 
 
@@ -22,14 +23,7 @@ void AWaterSim::BeginPlay()
 	PrimaryActorTick.bCanEverTick = true;
 
 
-	WaterTargetCapture = CastChecked<UWaterCanvas2D>(UCanvasRenderTarget2D::CreateCanvasRenderTarget2D(this, UWaterCanvas2D::StaticClass(), 1024, 1024));
-
-
-	if ( WaterTargetCapture == nullptr ) {
-		FError::Throwf(TEXT("WaterTargetCapture is null!"));
-		return;
-	}
-
+	MyCapture = UTexture2D::CreateTransient(1024, 1024, PF_B8G8R8A8);
 
 	DoCycle();
 	
@@ -38,27 +32,57 @@ void AWaterSim::BeginPlay()
 // Called every frame
 void AWaterSim::Tick( float DeltaTime )
 {
+
+	Super::Tick(DeltaTime);
 	
-	if ( WaterTargetCapture == NULL ) {
-		FError::Throwf(TEXT("WaterTargetCapture is null 888888!"));
+	if ( MyCapture == NULL ) {
+		FError::Throwf(TEXT("MyCapture is null 888888!"));
 	}
-	
-	Super::Tick( DeltaTime );
-	//DoCycle();
+	else {
+		DoCycle();
+	}
+
 }
 
 void AWaterSim::DoCycle() {
 
-	if ( WaterTargetCapture != nullptr ) {
-		WaterTargetCapture->UpdateResource();
+		
+	FTexture2DMipMap *mip = &( MyCapture->PlatformData->Mips[0] );
+		
+	uint8* MipData = (uint8*)mip->BulkData.Lock(LOCK_READ_WRITE);
+
+	const int32 Width = mip->SizeX;
+	const int32 Height = mip->SizeY;
+
+	for ( int32 y=0; y<Height; y++ )
+	{
+		uint8* DestPtr = &MipData[( Height - 1 - y ) * Width * sizeof(FColor)];
+		FColor SrcPtr(255,255,0,255);
+		for ( int32 x=0; x<Width; x++ )
+		{
+			*DestPtr++ = SrcPtr.B;
+			*DestPtr++ = SrcPtr.G;
+			*DestPtr++ = SrcPtr.R;
+			*DestPtr++ = SrcPtr.A;
+		}
 	}
+
+	mip->BulkData.Unlock();
+
+	// Set options
+	MyCapture->SRGB = false;
+	MyCapture->CompressionNone = true;
+	MyCapture->MipGenSettings = TMGS_NoMipmaps;
+	MyCapture->CompressionSettings = TC_Default; //TC_Default
+	
+	// Update the remote texture data
+	MyCapture->UpdateResource();
+
+	
 }
 
 void AWaterSim::BeginDestroy() {
-	if ( WaterTargetCapture != nullptr && WaterTargetCapture->IsValidLowLevel() ) {
-		WaterTargetCapture->ConditionalBeginDestroy();
-	}
-	WaterTargetCapture = nullptr;
+
 
 	Super::BeginDestroy();
 }
