@@ -2,14 +2,17 @@
 
 #pragma once
 
-
+/*
 #define LAPACK_COMPLEX_STRUCTURE 
 #include "lapacke_config.h"
 #include "lapacke.h"
+*/
+
 
 #include "GameFramework/Actor.h"
 #include "ImageUtils.h"
 #include "Engine/Texture2D.h"
+#include "WaterCanvas2D.h"
 #include "WaterSim.generated.h"
 
 UCLASS()
@@ -27,11 +30,13 @@ public:
 	// Called every frame
 	virtual void Tick( float DeltaSeconds ) override;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadonly)
-	UTexture2D *WaterTarget;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+		UWaterCanvas2D *WaterTargetCapture;
 
 	virtual void BeginDestroy() override;
 	
 	void DoCycle();
+
+	static void CopyTextureToRenderTargetTexture(UTexture* SourceTexture, UTextureRenderTarget2D* RenderTargetTexture, ERHIFeatureLevel::Type FeatureLevel);
 
 };
