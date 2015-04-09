@@ -1,23 +1,25 @@
 #include <iostream>
-#include "lapacke.h"
 #include <cblas.h>
 #include <iterator>
 #include <array>
 #include <algorithm>
-#include <string.h>
 
 using namespace std;
 
 // Zeros an nxn matrix
 void zeros(double *A, int n) {
-   double zero = 0.0;
-   memset_pattern8(A, &zero, n*n*sizeof(*A));
+   size_t nn = n*n;
+   for (size_t i = 0; i < nn; i++) {
+      A[i] = 0.0;
+   }
 }
 
 // Sets all values of an nxn matrix to 1.0
 void ones(double *A, int n) {
-   double one = 1.0;
-   memset_pattern8(A, &one, n*n*sizeof(*A));
+   size_t nn = n*n;
+   for (size_t i = 0; i < nn; i++) {
+      A[i] = 1.0;
+   }
 }
 
 double *matalloc(int n) {
@@ -39,13 +41,16 @@ void printmat(double* H, int n) {
 
 inline void firstHalfStep(
    int n,
+   double dt,
+   double dx,
    double *H,
    double *Hx,
    double *Ux,
    double *Vx,
    double *Hy,
    double *Uy,
-   double *Vy
+   double *Vy,
+   double *swap
 ) {
 
    H[0]=.1;
@@ -152,7 +157,7 @@ int main(int argc, char** argv) {
    double *Vy = matalloc(n+1);
    zeros(Vy, n+1);
 
-   double *swap = malloc(sizeof(*swap) * n+2)
+   double *swap = (double*)malloc(sizeof(*swap) * n+2);
 
    firstHalfStep(n, dt, dx, H, Hx, Ux, Vx, Hy, Uy, Vy, swap);
 

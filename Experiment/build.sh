@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-LDFLAGS="-lcblas"
+LDFLAGS="-lblas"
 
-CPPFLAGS="-I/usr/local/Cellar/lapack/3.5.0/include/"
+CPPFLAGS="-I/usr/local/Cellar/lapack/3.5.0/include/ -I/usr/include/"
 
 
 set -v
-clang++ math.cpp -std=c++11 $CPPFLAGS $LDFLAGS
+g++ -std=c++11 $CPPFLAGS $LDFLAGS math.cpp 
