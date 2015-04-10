@@ -144,18 +144,18 @@ inline void secondHalfStep(
       for (int i = 1; i < n+1; i++) {
          // height
 
-         H[i,j] = H[i,j] - (dt/dx)*(Ux[i*sizeofUX+j-1]-Ux[(i-1)*sizeofUX+j-1]) -
-                           (dt/dy)*(Vy[(i-1)*sizeofVY+j]-Vy[(i-1)*sizeofVY+j-1]);
+         H[i,j] = H[i,j] - (dt/dx)*(Ux[i*(n+1)+j-1]-Ux[(i-1)*(n+1)+j-1]) -
+                           (dt/dy)*(Vy[(i-1)*(n+1)+j]-Vy[(i-1)*(n+1)+j-1]);
          // x momentum
-         U[i,j] = U[i,j] - (dt/dx)*((sq(Ux[i*sizeofUX+j-1])/Hx[i*sizeofHX+j-1] + g/2*sq(Hx[i*sizeofHX+j-1])) -
-                           (sq(Ux[(i-1)*sizeofUX+j-1])/Hx[(i-1)*sizeofHX+j-1] + g/2*sq(Hx[(i-1)*sizeofHX+j-1])))
-                         - (dt/dy)*((Vy[(i-1)*sizeofVY+j]*Uy[(i-1)*sizeofUY+j]/Hy[(i-1)*sizeofHY+j]) -
-                           (Vy[(i-1)*sizeofVY+j-1]*Uy[(i-1)*sizeofUY+j-1]/Hy[(i-1)*sizeofHY+j-1]));
+         U[i,j] = U[i,j] - (dt/dx)*((sq(Ux[i*(n+1)+j-1])/Hx[i*(n+1)+j-1] + g/2*sq(Hx[i*(n+1)+j-1])) -
+                           (sq(Ux[(i-1)*(n+1)+j-1])/Hx[(i-1)*(n+1)+j-1] + g/2*sq(Hx[(i-1)*(n+1)+j-1])))
+                         - (dt/dy)*((Vy[(i-1)*(n+1)+j]*Uy[(i-1)*(n+1)+j]/Hy[(i-1)*(n+1)+j]) -
+                           (Vy[(i-1)*(n+1)+j-1]*Uy[(i-1)*(n+1)+j-1]/Hy[(i-1)*(n+1)+j-1]));
          // y momentum
-         V[i,j] = V[i,j] - (dt/dx)*((Ux[i*sizeofUX+j-1]*Vx[i*sizeofVX+j-1]/Hx[i*sizeofHX+j-1]) -
-                           (Ux[(i-1)*sizeofUX+j-1]*Vx[(i-1)*sizeofVX+j-1]/Hx[(i-1)*sizeofHX+j-1]))
-                         - (dt/dy)*((sq(Vy[(i-1)*sizeofVY+j])/Hy[(i-1)*sizeofHY+j] + g/2*sq(Hy[(i-1)*sizeofHY+j])) -
-                           (sq(Vy[(i-1)*sizeofVY+j-1])/Hy[(i-1)*sizeofHY+j-1] + g/2*sq(Hy[(i-1)*sizeofHY+j-1])));
+         V[i,j] = V[i,j] - (dt/dx)*((Ux[i*(n+1)+j-1]*Vx[i*(n+1)+j-1]/Hx[i*(n+1)+j-1]) -
+                           (Ux[(i-1)*(n+1)+j-1]*Vx[(i-1)*(n+1)+j-1]/Hx[(i-1)*(n+1)+j-1]))
+                         - (dt/dy)*((sq(Vy[(i-1)*(n+1)+j])/Hy[(i-1)*(n+1)+j] + g/2*sq(Hy[(i-1)*(n+1)+j])) -
+                           (sq(Vy[(i-1)*(n+1)+j-1])/Hy[(i-1)*(n+1)+j-1] + g/2*sq(Hy[(i-1)*(n+1)+j-1])));
       }
    }
 }
