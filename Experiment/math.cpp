@@ -39,12 +39,21 @@ void printmat(double* H, int n) {
    }
 }
 
+void printvec(double* H, int n) {
+   for (int i = 0; i < n; i++) {
+      cout << H[i];
+      cout << endl;
+   }
+   cout << endl;
+}
+
 inline void firstHalfStep(
    int n,
    double dt,
    double dx,
    double *H,
    double *Hx,
+   double *U,
    double *Ux,
    double *Vx,
    double *Hy,
@@ -77,6 +86,8 @@ inline void firstHalfStep(
    printmat(H, n+2);
    cout << endl << "Hx:" << endl;
    printmat(Hx, n+1);
+   cout << endl << "U:" << endl;
+   printmat(U, n+2);
    cout << endl;
    
    // Original matlab source:
@@ -120,10 +131,36 @@ inline void firstHalfStep(
       //    <1.b> Hx(i,j) = Hx(i,j) - dt/(2*dx)*(U(i+1,j+1)-U(i,j+1));
       //    <1.b> Hx([1:n+1],[1:n]) = Hx([1:n+1],[1:n]) - dt/(2*dx)*(U(i+1,j+1)-U(i,j+1));
       //    <1.b> Hx([1:n+1],[1:n]) += - dt/(2*dx)*(U(i+1,j+1)-U(i,j+1));
+
       // In other words:
-      //    <1.b.1> swap = U(i+1,j+1) ;
-      //    <1.b.2> swap -= U(i,j+1) ;
+      //    <1.b.1> swap = U([2:n+2],[2:n+1]) ;
+      cblas_dcopy(
+         n+1,
+         (const double*)(U+(n+2)+i+1),
+         n+2,
+         swap,
+         1
+      );
+      //    <1.b.2> swap = -U([1:n+1],[2:n+1]) + swap ;
+      cblas_daxpy(
+         n+1,
+         -1,
+         (const double*)(U+i+1),
+         n+2,
+         swap,
+         1
+      );
       //    <1.b.3> Hx([1:n+1],[1:n]) += - dt/(2*dx)*swap;
+      cblas_daxpy(
+         n+1,
+         -dt/(2*dx),
+         (const double*)(swap),
+         1,
+         Hx,
+         n+1
+      );
+
+      
    }
    cout << endl;
 }
@@ -140,6 +177,8 @@ int main(int argc, char** argv) {
    ones(H, n+2);
    double *U = matalloc(n+2);
    zeros(U, n+2);
+   U[10]=17;
+   U[14]=1337;
    double *V = matalloc(n+2);
    zeros(V, n+2);
 
@@ -159,7 +198,7 @@ int main(int argc, char** argv) {
 
    double *swap = (double*)malloc(sizeof(*swap) * n+2);
 
-   firstHalfStep(n, dt, dx, H, Hx, Ux, Vx, Hy, Uy, Vy, swap);
+   firstHalfStep(n, dt, dx, H, Hx, U, Ux, Vx, Hy, Uy, Vy, swap);
 
 
    return 0;
