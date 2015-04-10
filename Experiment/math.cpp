@@ -91,6 +91,7 @@ inline void firstHalfStep(
    cout << endl;
    
    // Original matlab source:
+   //    <1>
    //    Hx(i,j) = (H(i+1,j+1)+H(i,j+1))/2 - dt/(2*dx)*(U(i+1,j+1)-U(i,j+1));
    // Break that down into:
    //    <1.a> Hx(i,j) = (H(i+1,j+1)+H(i,j+1))/2)
@@ -102,29 +103,29 @@ inline void firstHalfStep(
    //    <1.a.1> Hx([1:n+1],[1:n]) = H([2:n+2],[2:n+1])+H([1:n+1],[2:n+1])
    //    <1.a.2> Hx([1:n+1],[1:n]) = Hx(i,j)/2
 
-   for (int i = 0; i < n+1; i++) {
+   for (int j = 0; j < n; j++) {
       // Height
       //    <1.a.1> Hx([1:n+1],[1:n]) = H([2:n+2],[2:n+1])+H([1:n+1],[2:n+1])
       cblas_dcopy(
          n+1,
-         (const double*)(H+n+2+i+1),
+         (const double*)(H+n+2+j+1),
          n+2,
-         Hx+i,
+         Hx+j,
          n+1
       );
       cblas_daxpy(
          n+1,
          1,
-         (const double*)(H+1+i),
+         (const double*)(H+1+j),
          n+1,
-         Hx+i,
+         Hx+j,
          n+1
       );
       //    <1.a.2> Hx([1:n+1],[1:n]) = Hx(i,j)/2
       cblas_dscal(
          n+1,
          .5,
-         Hx+i,
+         Hx+j,
          n+1
       );
       // Since i = 1:n+1 and j = 1:n, 
@@ -136,16 +137,18 @@ inline void firstHalfStep(
       //    <1.b.1> swap = U([2:n+2],[2:n+1]) ;
       cblas_dcopy(
          n+1,
-         (const double*)(U+(n+2)+i+1),
+         (const double*)(U+(n+2)+j+1),
          n+2,
          swap,
          1
       );
+      cout << "Swap is " <<endl;
+      printvec(swap, n+1);
       //    <1.b.2> swap = -U([1:n+1],[2:n+1]) + swap ;
       cblas_daxpy(
          n+1,
          -1,
-         (const double*)(U+i+1),
+         (const double*)(U+j+1),
          n+2,
          swap,
          1
@@ -159,6 +162,22 @@ inline void firstHalfStep(
          Hx,
          n+1
       );
+
+      printmat(Hx, n+1);
+
+      // Original matlab source:
+      //    <2>
+      //    Ux(i,j) = (U(i+1,j+1)+U(i,j+1))/2 -  ...
+      //                dt/(2*dx)*((U(i+1,j+1).^2./H(i+1,j+1) + g/2*H(i+1,j+1).^2) - ...
+      //                (U(i,j+1).^2./H(i,j+1) + g/2*H(i,j+1).^2));
+      //    Ux(i,j) = (
+      //                U(i+1,j+1)+U(i,j+1)
+      //               )/2 
+      //               -  dt/(2*dx)*(
+      //                   (U(i+1,j+1).^2./H(i+1,j+1) + g/2*H(i+1,j+1).^2) - ...
+      //                   (U(i,j+1).^2./H(i,j+1) + g/2*H(i,j+1).^2)
+      //                );
+   
 
       
    }
@@ -196,7 +215,7 @@ int main(int argc, char** argv) {
    double *Vy = matalloc(n+1);
    zeros(Vy, n+1);
 
-   double *swap = (double*)malloc(sizeof(*swap) * n+2);
+   double *swap = (double*)malloc(sizeof(*swap) * (n+1));
 
    firstHalfStep(n, dt, dx, H, Hx, U, Ux, Vx, Hy, Uy, Vy, swap);
 
