@@ -118,6 +118,43 @@ inline void firstHalfStep(
    cout << endl;
 }
 
+inline void secondHalfStep(
+   int n,
+   double g,
+   double dt,
+   double dx,
+   double dy,
+
+   double *H,
+   double *U,
+   double *V,
+   double *Hx,
+   double *Ux,
+   double *Vx,
+   double *Hy,
+   double *Uy,
+   double *Vy
+) {
+   for (int j = 1; j < n+1; j++) {
+      for (int i = 1; i < n+1; i++) {
+         // height
+
+         H[i,j] = H[i,j] - (dt/dx)*(Ux[i*sizeofUX+j-1]-Ux[(i-1)*sizeofUX+j-1]) - ...
+                           (dt/dy)*(Vy[(i-1)*sizeofVY+j]-Vy[(i-1)*sizeofVY+j-1]);
+         // x momentum
+         U[i,j] = U[i,j] - (dt/dx)*((sq(Ux[i*sizeofUX+j-1])/Hx[i*sizeofHX+j-1] + g/2*sq(Hx[i*sizeofHX+j-1])) -
+                           (sq(Ux[(i-1)*sizeofUX+j-1])/Hx[(i-1)*sizeofHX+j-1] + g/2*sq(Hx[(i-1)*sizeofHX+j-1])))
+                         - (dt/dy)*((Vy[(i-1)*sizeofVY+j]*Uy[(i-1)*sizeofUY+j]/Hy[(i-1)*sizeofHY+j]) - ...
+                           (Vy[(i-1)*sizeofVY+j-1]*Uy[(i-1)*sizeofUY+j-1]/Hy[(i-1)*sizeofHY+j-1]));
+         // y momentum
+         V[i,j] = V[i,j] - (dt/dx)*((Ux[i*sizeofUX+j-1]*Vx[i*sizeofVX+j-1]/Hx[i*sizeofHX+j-1]) - ...
+                           (Ux[(i-1)*sizeofUX+j-1]*Vx[i-1,j-1]/Hx[i-1,j-1])) ...
+                         - (dt/dy)*((sq(Vy[i-1,j])/Hy[i-1,j] + g/2*sq(Hy[i-1,j])) - ...
+                           (sq(Vy[i-1,j-1])/Hy[i-1,j-1] + g/2*sq(Hy[i-1,j-1])));
+      }
+   }
+}
+
 
 int main(int argc, char** argv) {
    int n = 64;
@@ -153,6 +190,7 @@ int main(int argc, char** argv) {
    double *swap = (double*)malloc(sizeof(*swap) * (n+1));
 
    firstHalfStep(n, -9.8, dt, dx, dy, H, U, V, Hx, Ux, Vx, Hy, Uy, Vy);
+   secondHalfStep(n, -9.8, dt, dx, dy, H, U, V, Hx, Ux, Vx, Hy, Uy, Vy);
 
    return 0;
 }
