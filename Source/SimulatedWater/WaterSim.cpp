@@ -7,11 +7,9 @@
 
 
 AWaterSim::AWaterSim(const class FObjectInitializer & foi) : Super(foi) {
-
-}
-
-AWaterSim::AWaterSim() {
 	
+
+
 }
 
 
@@ -22,8 +20,8 @@ void AWaterSim::BeginPlay()
 
 	PrimaryActorTick.bCanEverTick = true;
 
-
 	MyCapture = UTexture2D::CreateTransient(1024, 1024, PF_B8G8R8A8);
+	Worker = FSimulatedWaterWorker::Create(1024);
 
 	DoCycle();
 	
@@ -54,17 +52,23 @@ void AWaterSim::DoCycle() {
 	const int32 Width = mip->SizeX;
 	const int32 Height = mip->SizeY;
 
-	for ( int32 y=0; y<Height; y++ )
 	{
-		uint8* DestPtr = &MipData[( Height - 1 - y ) * Width * sizeof(FColor)];
-		FColor SrcPtr(255,255,0,255);
-		for ( int32 x=0; x<Width; x++ )
+		
+		FScopeLock Lock(&(Worker->AccessPublicBuffer));
+		for ( int32 y=0; y < Height; y++ )
 		{
-			*DestPtr++ = SrcPtr.B;
-			*DestPtr++ = SrcPtr.G;
-			*DestPtr++ = SrcPtr.R;
-			*DestPtr++ = SrcPtr.A;
+			uint8* DestPtr = &MipData[( Height - 1 - y ) * Width * sizeof(FColor)];
+			
+			for ( int32 x=0; x < Width; x++ )
+			{
+				FColor SrcPtr(Worker->PublicBuffer[y*Width + x], Worker->PublicBuffer[y*Width + x], Worker->PublicBuffer[y*Width + x], 255);
+				*DestPtr++ = SrcPtr.B;
+				*DestPtr++ = SrcPtr.G;
+				*DestPtr++ = SrcPtr.R;
+				*DestPtr++ = SrcPtr.A;
+			}
 		}
+		
 	}
 
 	mip->BulkData.Unlock();
@@ -83,6 +87,9 @@ void AWaterSim::DoCycle() {
 
 void AWaterSim::BeginDestroy() {
 
+	if ( Worker ) {
+		Worker->Shutdown();
+	}
 
 	Super::BeginDestroy();
 }
