@@ -25,14 +25,7 @@ FORCEINLINE void FSimulatedWaterWorker::firstHalfStep(
 	double *Vy
 
 	) {
-
-	/*for ( int i = 1; i < ( n + 1 ); i++ ) {
-		for ( int j = 1; j < ( n + 1 ); j++ ) {
-			H[i*( 1024 ) + j] = FMath::Sin(i/100.0)*FMath::Sin(j/100.0);
-		}
-	}*/
 	
-	//return;
 
 		// x direction
 		for ( int j = 0; j < n; j++ ) {
@@ -98,7 +91,6 @@ FORCEINLINE void FSimulatedWaterWorker::secondHalfStep(
 	double *Uy,
 	double *Vy
 	) {
-	//return;
 		for ( int j = 1; j < n + 1; j++ ) {
 			for ( int i = 1; i < n + 1; i++ ) {
 				// height
@@ -152,10 +144,10 @@ uint32 FSimulatedWaterWorker::Run() {
 		secondHalfStep(n, 9.8, dt, dx, dy, H, U, V, Hx, Ux, Vx, Hy, Uy, Vy);
 
 		{
-			//FScopeLock Lock(&AccessPublicBuffer);
-			for ( int i = 0; i < n+1; i++ ) {
-				for ( int j = 0; j < n+1; j++ ) {
-					PublicBuffer[i*(n+2)+j] = FMath::Lerp<uint8, float>(0, 255, FMath::Clamp<double>(Hx[i*(n+1)+j]+1, -1, 1));
+			FScopeLock Lock(&AccessPublicBuffer);
+			for ( int i = 0; i < n+2; i++ ) {
+				for ( int j = 0; j < n+2; j++ ) {
+					PublicBuffer[i*(n+2)+j] = FMath::Lerp<uint8, float>(0, 255, FMath::Clamp<double>(H[i*(n+2)+j], 0, 2)/2.0);
 				}
 			}
 		}
@@ -215,7 +207,7 @@ FSimulatedWaterWorker::FSimulatedWaterWorker(int n)
 	zeros(V, n + 2);
 
 	Hx = matalloc(n + 1);
-	ones(Hx, n + 1);
+	zeros(Hx, n + 1);
 
 	Ux = matalloc(n + 1);
 	zeros(Ux, n + 1);
@@ -224,7 +216,7 @@ FSimulatedWaterWorker::FSimulatedWaterWorker(int n)
 	zeros(Vx, n + 1);
 
 	Hy = matalloc(n + 1);
-	ones(Hy, n + 1);
+	zeros(Hy, n + 1);
 
 	Uy = matalloc(n + 1);
 	zeros(Uy, n + 1);
@@ -232,9 +224,13 @@ FSimulatedWaterWorker::FSimulatedWaterWorker(int n)
 	Vy = matalloc(n + 1);
 	zeros(Vy, n + 1);
 
-	H[( n + 2 )*( n + 2 ) / 2] = 0.0;
-	H[200] = 0.0;
-	H[2048] = 0.0;
+	for ( int i = n / 2; i < n / 2 + 50; i++ )
+	{
+		for ( int j = n / 2; j < n / 2 + 50; j++ )
+		{
+			H[i * 256 + j] = 2;
+		}
+	}
 
 	PublicBuffer = (uint8*)malloc(( n + 2 )*( n + 2 )*sizeof(*PublicBuffer));
 

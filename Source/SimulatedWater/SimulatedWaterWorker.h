@@ -63,7 +63,7 @@ private:
 	double *matalloc(int n);
 
 	int n;
-	double dt = 0.001;
+	double dt = 0.01;
 	double dx = 1.0;
 	double dy = 1.0;
 	double *H;

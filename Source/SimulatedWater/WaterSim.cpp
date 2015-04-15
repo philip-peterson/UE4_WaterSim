@@ -20,8 +20,8 @@ void AWaterSim::BeginPlay()
 
 	PrimaryActorTick.bCanEverTick = true;
 
-	MyCapture = UTexture2D::CreateTransient(1024, 1024, PF_B8G8R8A8);
-	Worker = FSimulatedWaterWorker::Create(1024);
+	MyCapture = UTexture2D::CreateTransient(256, 256, PF_B8G8R8A8);
+	Worker = FSimulatedWaterWorker::Create(256);
 
 	DoCycle();
 	
