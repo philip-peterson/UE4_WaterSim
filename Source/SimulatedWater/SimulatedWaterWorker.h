@@ -20,6 +20,7 @@ private:
 	FThreadSafeBool bStopTask;
 
 	FORCEINLINE void firstHalfStep(
+		int iter,
 		int n,
 		double g,
 		double dt,
@@ -39,6 +40,7 @@ private:
 	);
 
 	FORCEINLINE void secondHalfStep(
+		int iter,
 		int n,
 		double g,
 		double dt,
@@ -62,10 +64,10 @@ private:
 	void ones(double *A, int n);
 	double *matalloc(int n);
 
-	int n;
+	uint16 n;
 	double dt = 0.01;
-	double dx = 1.0;
-	double dy = 1.0;
+	double dx = 1;
+	double dy = 1;
 	double *H;
 	double *U;
 	double *V;
@@ -76,9 +78,13 @@ private:
 	double *Uy;
 	double *Vy;
 
-	FSimulatedWaterWorker(int n);
+	FSimulatedWaterWorker(uint16 n, double dt, double ds, double DampingFactor, int32 DampingInfrequency);
 
 public:
+
+	double DampingFactor = .01;
+
+	int32 DampingInfrequency = 1;
 
 	FCriticalSection AccessPublicBuffer;
 
@@ -88,7 +94,7 @@ public:
 
 	void UnlockBuffer();
 
-	static FSimulatedWaterWorker *Create(int n);
+	static FSimulatedWaterWorker *Create(uint16 n, double dt, double ds, double DampingFactor, int32 DampingInfrequency);
 
 	void Shutdown();
 

@@ -8,6 +8,7 @@ bool FSimulatedWaterWorker::Init() {
 }
 
 FORCEINLINE void FSimulatedWaterWorker::firstHalfStep(
+	int iter,
 	int n,
 	double g,
 	double dt,
@@ -75,6 +76,7 @@ FORCEINLINE void FSimulatedWaterWorker::firstHalfStep(
 }
 
 FORCEINLINE void FSimulatedWaterWorker::secondHalfStep(
+	int iter,
 	int n,
 	double g,
 	double dt,
@@ -91,6 +93,7 @@ FORCEINLINE void FSimulatedWaterWorker::secondHalfStep(
 	double *Uy,
 	double *Vy
 	) {
+		double temp;
 		for ( int j = 1; j < n + 1; j++ ) {
 			for ( int i = 1; i < n + 1; i++ ) {
 				// height
@@ -103,10 +106,17 @@ FORCEINLINE void FSimulatedWaterWorker::secondHalfStep(
 					- ( dt / dy )*( ( Vy[( i - 1 )*( n + 1 ) + j] * Uy[( i - 1 )*( n + 1 ) + j] / Hy[( i - 1 )*( n + 1 ) + j] ) -
 					( Vy[( i - 1 )*( n + 1 ) + j - 1] * Uy[( i - 1 )*( n + 1 ) + j - 1] / Hy[( i - 1 )*( n + 1 ) + j - 1] ) );
 				// y momentum
-				V[i * ( n + 2 ) + j] = V[i * ( n + 2 ) + j] - ( dt / dx )*( ( Ux[i*( n + 1 ) + j - 1] * Vx[i*( n + 1 ) + j - 1] / Hx[i*( n + 1 ) + j - 1] ) -
+				temp = V[i * ( n + 2 ) + j] - ( dt / dx )*( ( Ux[i*( n + 1 ) + j - 1] * Vx[i*( n + 1 ) + j - 1] / Hx[i*( n + 1 ) + j - 1] ) -
 					( Ux[( i - 1 )*( n + 1 ) + j - 1] * Vx[( i - 1 )*( n + 1 ) + j - 1] / Hx[( i - 1 )*( n + 1 ) + j - 1] ) )
 					- ( dt / dy )*( ( sq(Vy[( i - 1 )*( n + 1 ) + j]) / Hy[( i - 1 )*( n + 1 ) + j] + g / 2 * sq(Hy[( i - 1 )*( n + 1 ) + j]) ) -
 					( sq(Vy[( i - 1 )*( n + 1 ) + j - 1]) / Hy[( i - 1 )*( n + 1 ) + j - 1] + g / 2 * sq(Hy[( i - 1 )*( n + 1 ) + j - 1]) ) );
+
+				//if ( DampingInfrequency != 0) {
+				//	if ( iter % DampingInfrequency == 0 ) {
+				//		temp = ( 1 - DampingFactor )*temp + DampingInfrequency * 1;
+				//	}
+				//}
+				V[i * ( n + 2 ) + j] = temp;
 			}
 		}
 }
@@ -138,19 +148,28 @@ double* FSimulatedWaterWorker::matalloc(int n) {
 
 uint32 FSimulatedWaterWorker::Run() {
 
+	int iter = 0;
+
 	while ( ! bStopTask ) {
 
-		firstHalfStep(n, 9.8, dt, dx, dy, H, U, V, Hx, Ux, Vx, Hy, Uy, Vy);
-		secondHalfStep(n, 9.8, dt, dx, dy, H, U, V, Hx, Ux, Vx, Hy, Uy, Vy);
+		if ( iter % 1000 == 0 ) {
+			H[256 / 2 * 256 + 256 / 2] +=5;
+		}
+
+		firstHalfStep(iter, n, 9.8, dt, dx, dy, H, U, V, Hx, Ux, Vx, Hy, Uy, Vy);
+		secondHalfStep(iter, n, 9.8, dt, dx, dy, H, U, V, Hx, Ux, Vx, Hy, Uy, Vy);
+
 
 		{
 			FScopeLock Lock(&AccessPublicBuffer);
 			for ( int i = 0; i < n+2; i++ ) {
 				for ( int j = 0; j < n+2; j++ ) {
-					PublicBuffer[i*(n+2)+j] = FMath::Lerp<uint8, float>(0, 255, FMath::Clamp<double>(H[i*(n+2)+j], 0, 2)/2.0);
+					PublicBuffer[i*(n+2)+j] = FMath::Lerp<uint8, float>(0, 255, FMath::Clamp<double>(H[i*(n+2)+j]+1, 0, 4)/4.0);
 				}
 			}
 		}
+
+		iter++;
 
 	}
 
@@ -185,17 +204,24 @@ void FSimulatedWaterWorker::Exit() {
  * Creates a Simulated Water worker with a texture buffer size of n by n.
  * Returns null if the platform does not support multithreading or n is too small.
  */
-FSimulatedWaterWorker* FSimulatedWaterWorker::Create(int n) {
+FSimulatedWaterWorker* FSimulatedWaterWorker::Create(uint16 n, double dt, double ds, double DampingFactor, int32 DampingInfrequency) {
 	if ( !FPlatformProcess::SupportsMultithreading() || n < 3 ) {
 		return nullptr;
 	}
-	FSimulatedWaterWorker *x = new FSimulatedWaterWorker(n-2);
+	FSimulatedWaterWorker *x = new FSimulatedWaterWorker(n-2, dt, ds, DampingFactor, DampingInfrequency);
 	return x;
 }
 
-FSimulatedWaterWorker::FSimulatedWaterWorker(int n) 
-	: n(n),
-	bStopTask(false) {
+FSimulatedWaterWorker::FSimulatedWaterWorker(uint16 n, double dt, double ds, double DampingFactor, int32 DampingInfrequency)
+	: 
+		n(n),
+		bStopTask(false),
+		dt(dt),
+		dx(ds),
+		dy(ds),
+		DampingFactor(DampingFactor),
+		DampingInfrequency(DampingInfrequency)
+	{
 
 	H = matalloc(n + 2);
 	ones(H, n + 2);
@@ -224,13 +250,8 @@ FSimulatedWaterWorker::FSimulatedWaterWorker(int n)
 	Vy = matalloc(n + 1);
 	zeros(Vy, n + 1);
 
-	for ( int i = n / 2; i < n / 2 + 50; i++ )
-	{
-		for ( int j = n / 2; j < n / 2 + 50; j++ )
-		{
-			H[i * 256 + j] = 2;
-		}
-	}
+
+	
 
 	PublicBuffer = (uint8*)malloc(( n + 2 )*( n + 2 )*sizeof(*PublicBuffer));
 

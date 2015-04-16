@@ -8,7 +8,7 @@
 
 AWaterSim::AWaterSim(const class FObjectInitializer & foi) : Super(foi) {
 	
-
+	//Timer = UGameplayStatics::GetRealTimeSeconds(this);
 
 }
 
@@ -20,8 +20,10 @@ void AWaterSim::BeginPlay()
 
 	PrimaryActorTick.bCanEverTick = true;
 
-	MyCapture = UTexture2D::CreateTransient(256, 256, PF_B8G8R8A8);
-	Worker = FSimulatedWaterWorker::Create(256);
+	n = GridSize > 2 ? GridSize : 2;
+
+	MyCapture = UTexture2D::CreateTransient(n, n, PF_B8G8R8A8);
+	Worker = FSimulatedWaterWorker::Create(n, dt, ds, DampingFactor, DampingInfrequency);
 
 	DoCycle();
 	
@@ -33,17 +35,26 @@ void AWaterSim::Tick( float DeltaTime )
 
 	Super::Tick(DeltaTime);
 	
-	if ( MyCapture == NULL ) {
-		FError::Throwf(TEXT("MyCapture is null 888888!"));
-	}
-	else {
-		DoCycle();
-	}
+	
+	DoCycle();
+
 
 }
 
 void AWaterSim::DoCycle() {
 
+	if ( MyCapture == nullptr ) {
+		return;
+	}
+
+	/*
+	if ( UGameplayStatics::GetRealTimeSeconds(this) - Timer < 1 / DesiredFramerate ) {
+		return;
+	}
+	else {
+		Timer = UGameplayStatics::GetRealTimeSeconds(this);
+	}
+	*/
 		
 	FTexture2DMipMap *mip = &( MyCapture->PlatformData->Mips[0] );
 		
@@ -61,11 +72,11 @@ void AWaterSim::DoCycle() {
 			
 			for ( int32 x=0; x < Width; x++ )
 			{
-				FColor SrcPtr(Worker->PublicBuffer[y*Width + x], Worker->PublicBuffer[y*Width + x], Worker->PublicBuffer[y*Width + x], 255);
-				*DestPtr++ = SrcPtr.B;
-				*DestPtr++ = SrcPtr.G;
-				*DestPtr++ = SrcPtr.R;
-				*DestPtr++ = SrcPtr.A;
+				uint8 val = Worker->PublicBuffer[y*Width + x];
+				*DestPtr++ = val;
+				*DestPtr++ = val;
+				*DestPtr++ = val;
+				*DestPtr++ = 255;
 			}
 		}
 		

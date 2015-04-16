@@ -30,8 +30,28 @@ public:
 	virtual void Tick( float DeltaSeconds ) override;
 
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float DampingFactor = .01;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		int32 DampingInfrequency = 1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		int32 GridSize = 256;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=( FriendlyName = "Time Step" ))
+		float dt = 0.01;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=( FriendlyName = "Space Step" ))
+		float ds = 1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float DesiredFramerate = 15;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 		UTexture2D *MyCapture = nullptr;
+
+
 	
 	virtual void BeginDestroy() override;
 	
@@ -39,6 +59,9 @@ public:
 
 private:
 
+	int n;
+
+	float Timer;
 
 	FSimulatedWaterWorker *Worker = nullptr;
 
