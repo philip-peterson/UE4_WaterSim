@@ -37,6 +37,7 @@ FORCEINLINE void FSimulatedWaterWorker::firstHalfStep(
 					( H[( i + 1 )*( n + 2 ) + j + 1] + H[i*( n + 2 ) + j + 1] ) / 2
 					- dt / ( 2 * dx )*( U[( i + 1 )*( n + 2 ) + j + 1] - U[i*( n + 2 ) + j + 1] );
 
+
 				// x momentum
 				Ux[i*( n + 1 ) + j] =
 					( U[( i + 1 )*( n + 2 ) + j + 1] + U[i*( n + 2 ) + j + 1] ) / 2 -
@@ -98,7 +99,7 @@ FORCEINLINE void FSimulatedWaterWorker::secondHalfStep(
 			for ( int i = 1; i < n + 1; i++ ) {
 				// height
 
-				H[i * ( n + 2 ) + j] = H[i * ( n + 2 ) + j] - ( dt / dx )*( Ux[i*( n + 1 ) + j - 1] - Ux[( i - 1 )*( n + 1 ) + j - 1] ) -
+				H[i * ( n + 2 ) + j] =  H[i * ( n + 2 ) + j] - ( dt / dx )*( Ux[i*( n + 1 ) + j - 1] - Ux[( i - 1 )*( n + 1 ) + j - 1] ) -
 					( dt / dy )*( Vy[( i - 1 )*( n + 1 ) + j] - Vy[( i - 1 )*( n + 1 ) + j - 1] );
 				// x momentum
 				U[i * ( n + 2 ) + j] = U[i * ( n + 2 ) + j] - ( dt / dx )*( ( sq(Ux[i*( n + 1 ) + j - 1]) / Hx[i*( n + 1 ) + j - 1] + g / 2 * sq(Hx[i*( n + 1 ) + j - 1]) ) -
@@ -111,11 +112,7 @@ FORCEINLINE void FSimulatedWaterWorker::secondHalfStep(
 					- ( dt / dy )*( ( sq(Vy[( i - 1 )*( n + 1 ) + j]) / Hy[( i - 1 )*( n + 1 ) + j] + g / 2 * sq(Hy[( i - 1 )*( n + 1 ) + j]) ) -
 					( sq(Vy[( i - 1 )*( n + 1 ) + j - 1]) / Hy[( i - 1 )*( n + 1 ) + j - 1] + g / 2 * sq(Hy[( i - 1 )*( n + 1 ) + j - 1]) ) );
 
-				//if ( DampingInfrequency != 0) {
-				//	if ( iter % DampingInfrequency == 0 ) {
-				//		temp = ( 1 - DampingFactor )*temp + DampingInfrequency * 1;
-				//	}
-				//}
+
 				V[i * ( n + 2 ) + j] = temp;
 			}
 		}
@@ -146,15 +143,61 @@ double* FSimulatedWaterWorker::matalloc(int n) {
 	return mem;
 }
 
+void FSimulatedWaterWorker::Perturb(int cx, int cy, int radius) {
+	int r2 = radius*radius;
+
+	int minx = cx - radius;
+	int miny = cy - radius;
+	int maxx = cx + radius;
+	int maxy = cy + radius;
+
+	minx = FMath::Max(minx, 0);
+	miny = FMath::Max(miny, 0);
+
+	maxx = FMath::Min(maxx, n+1);
+	maxy = FMath::Min(maxy, n + 1);
+
+	for ( int i = minx; i <= maxx; i++ ) {
+		for ( int j = miny; j <= maxy; j++ ) {
+			int w = ( i - cx );
+			int h = ( j - cy );
+			if ( w*w + h*h <= r2 ) {
+				V[i*( n + 2 ) + j] = 3.0;
+			}
+		}
+	}
+}
+
 uint32 FSimulatedWaterWorker::Run() {
 
 	int iter = 0;
 
 	while ( ! bStopTask ) {
 
-		if ( iter % 1000 == 0 ) {
-			H[256 / 2 * 256 + 256 / 2] +=5;
+		if ( iter % 100 == 0 )
+			Perturb(FMath::RandRange(0, n + 1), FMath::RandRange(0, n + 1), 5);
+
+
+		// Reflective boundary conditions
+
+		for ( int i = 0; i < n + 2; i++ ) {
+			H[i*( n + 2 ) + 0] = H[i*( n + 2 ) + 1];
+			U[i*( n + 2 ) + 0] = U[i*( n + 2 ) + 1];
+			V[i*( n + 2 ) + 0] = -V[i*( n + 2 ) + 1];
+
+			H[i*( n + 2 ) + n + 1] = H[i*( n + 2 ) + n];
+			U[i*( n + 2 ) + n + 1] = U[i*( n + 2 ) + n];
+			V[i*( n + 2 ) + n + 1] = -V[i*( n + 2 ) + n];
+
+			H[0 * ( n + 2 ) + i] = H[1 * ( n + 2 ) + i];
+			U[0 * ( n + 2 ) + i] = -U[1 * ( n + 2 ) + i];
+			V[0 * ( n + 2 ) + i] = V[1 * ( n + 2 ) + i];
+
+			H[( n + 1 ) * ( n + 2 ) + i] = H[( n + 0) * ( n + 2 ) + i];
+			U[( n + 1 ) * ( n + 2 ) + i] = -U[( n + 0 ) * ( n + 2 ) + i];
+			V[( n + 1 ) * ( n + 2 ) + i] = V[( n + 0 ) * ( n + 2 ) + i];
 		}
+
 
 		firstHalfStep(iter, n, 9.8, dt, dx, dy, H, U, V, Hx, Ux, Vx, Hy, Uy, Vy);
 		secondHalfStep(iter, n, 9.8, dt, dx, dy, H, U, V, Hx, Ux, Vx, Hy, Uy, Vy);

@@ -82,6 +82,8 @@ private:
 
 public:
 
+	void Perturb(int cx, int cy, int radius);
+
 	double DampingFactor = .01;
 
 	int32 DampingInfrequency = 1;
