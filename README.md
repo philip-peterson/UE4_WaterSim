@@ -1,4 +1,4 @@
-# UE4_WaterSim
+# Senior Project: Water Sim in UE4
 
 This project was an implementation of the shallow water equation in Unreal Engine 4 that I completed as my senior project at UF
 for my Computer Science bachelor's degree.
