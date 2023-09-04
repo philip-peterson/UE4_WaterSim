@@ -5,7 +5,7 @@ for my Computer Science bachelor's degree.
 
 ## Architecture
 
-The architecture uses a dual buffer scheme as shown:
+The architecture uses a triple buffer scheme as shown:
 
 <img width="760" alt="Screen Shot 2023-09-04 at 12 59 38 AM" src="https://github.com/philip-peterson/UE4_WaterSim/assets/1326208/ae4b44de-00fd-4b6c-b163-04873d44d9aa">
 
